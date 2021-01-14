@@ -3,6 +3,8 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
+const session = require("express-session");
+const FileStore = require("session-file-store")(session);
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -34,11 +36,25 @@ app.set("view engine", "jade");
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser("12345-67890-09876-54321"));
+//app.use(cookieParser("12345-67890-09876-54321"));
+
+//express sessions part1.
+app.use(
+  session({
+    name: "session-id",
+    secret: "12345-67890-09876-54321",
+    //new session are created, no updates are made to it. at the end of the request, it won't get saved because it will be an empty sessino without any useful information
+    saveUninitialized: false,
+    resave: false,
+    //will create a new file store aws an object that we can use to save our session information.
+    store: new FileStore(),
+  })
+);
 
 function auth(req, res, next) {
-  // console.log(req.headers); //see what's in it.
-  if (!req.signedCookies.user) {
+  console.log(req.session);
+
+  if (!req.session.user) {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       //if authHeader is null, user hasn't put username and password
@@ -55,8 +71,7 @@ function auth(req, res, next) {
     const user = auth[0];
     const pass = auth[1];
     if (user === "admin" && pass === "password") {
-      //letting express know to use secret key from cookie parser to create signed cookie
-      res.cookie("user", "admin", { signed: true });
+      req.session.user = "admin";
       return next(); // authorized
     } else {
       const err = new Error("You are not authenticated!");
@@ -65,15 +80,15 @@ function auth(req, res, next) {
       return next(err);
     }
   } else {
-    //if there is a sign cookie dot user value in the incoming request 
-     if (req.signedCookies.user === "admin") {
-       //grant access by passing the client on to the next middleware function using next()
-          return next();
-      } else {
-       const err = new Error("You are not authenticated!");
-       err.status = 401;
-       return next(err);
-     }
+    //if there is a sign cookie dot user value in the incoming request
+    if (req.session.user === "admin") {
+      //grant access by passing the client on to the next middleware function using next()
+      return next();
+    } else {
+      const err = new Error("You are not authenticated!");
+      err.status = 401;
+      return next(err);
+    }
   }
 }
 
