@@ -5,6 +5,8 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 const session = require("express-session");
 const FileStore = require("session-file-store")(session);
+const passport = require("passport");
+const authenticate = require("./authenticate");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -43,32 +45,28 @@ app.use(
   session({
     name: "session-id",
     secret: "12345-67890-09876-54321",
-    //new session are created, no updates are made to it. at the end of the request, it won't get saved because it will be an empty sessino without any useful information
     saveUninitialized: false,
     resave: false,
-    //will create a new file store aws an object that we can use to save our session information.
     store: new FileStore(),
   })
 );
+
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 
 function auth(req, res, next) {
-  console.log(req.session);
+  console.log(req.user);
 
-  if (!req.session.user) {
+  if (!req.user) {
       const err = new Error("You are not authenticated!");
       err.status = 401; 
       return next(err);
   }else {
-    if(req.session.user === 'authenticated') {
       return next();
-    } else{
-      const err= new Error('You are not autenticated!');
-      err.status = 401;
-      return next(err);
-    }
   }
 }
     
