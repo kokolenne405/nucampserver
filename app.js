@@ -10,6 +10,7 @@ var usersRouter = require("./routes/users");
 const campsiteRouter = require("./routes/campsiteRouter");
 const promotionsRouter = require("./routes/promotionRouter");
 const partnerRouter = require("./routes/partnerRouter");
+const uploadRouter = require("./routes/uploadRouter");
 
 const mongoose = require("mongoose");
 
@@ -34,7 +35,9 @@ app.all("*", (req, res, next) => {
     return next();
   } else {
     console.log(
-      `RRRedirecting to: https://${req.hostname}:${app.get("secPort")}${req.url}`
+      `RRRedirecting to: https://${req.hostname}:${app.get("secPort")}${
+        req.url
+      }`
     );
     res.redirect(
       301,
@@ -61,6 +64,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/campsites", campsiteRouter);
 app.use("/promotions", promotionsRouter);
 app.use("/partners", partnerRouter);
+app.use("/imageUpload", uploadRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
