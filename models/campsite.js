@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-//Task 3.
 const Schema = mongoose.Schema;
 
 require("mongoose-currency").loadType(mongoose);
